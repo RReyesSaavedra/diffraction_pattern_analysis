@@ -8,6 +8,9 @@ path_video = "/Users/Rudy/Documents/patron_KCl_4y5pulso.mp4"
 path_img = '/Users/Rudy/Documents/img_KCl_base'
 imgs_names = sorted(os.listdir(path_img))
 
+#what you wanna do ?
+
+
 "blockSize" # en el método adaptative threshold es el tamaño en pixeles del cuadro de exploración
 "C" # Factor multiplicativo flotante que puede admitir más o menos sensibilidad de deteccion
 "morph_iterations determines the iterations of morphological operations"
