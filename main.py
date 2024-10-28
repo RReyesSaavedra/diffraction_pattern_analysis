@@ -5,13 +5,13 @@ import os
 
 #getting the folder that was used to make the video to extract the names of the patterns
 folder_path = '/Users/Rudy/Documents/img_KCl_base'
-sample_size = 3
+sample_size = 2
 num_samples = 6
 
 imgs_names = sorted(os.listdir(folder_path))
 img_paths = []
 
-contador = 0
+#getting the complete path of the images
 for name in imgs_names:
     if name != '.DS_Store':
         path = os.path.join(folder_path, name)
@@ -20,24 +20,41 @@ for name in imgs_names:
 expected_n = num_samples*sample_size
 num_images = np.size(img_paths)
 
+error = False
 if expected_n == num_images:
-    option = int(input('Pattern analysis methods are: \n1.Fourier\n2.Bright areas and Bessel\n3.All'))
-    if option not in [1,2,3]:
-        print(option,' is not a valid option')
-        option = 500
+    #before starting we check all images can be read succesfully
+    c = 0
+    for s in range(num_samples):
+        for i in range(sample_size):
+            temp_img = cv2.imread(img_paths[c])
+            if temp_img is None:
+                print(f"\nError reading image: {img_paths[c]}")
+                error = True
+            else:
+                print(f"\nImage '{img_paths[c]}' was read successfully")
+            c += 1
+    #If there were no errors reading the images we continue to analyse the images
+    if not error: 
+        option = 0
+        while option not in [1,2,3]:
+            option = int(input('\nThese are the available options for anlyzing your pattern images: \n1.Fourier\n2.Bright areas and Bessel\n3.All\n\nPlease enter a number: '))
+            if option not in [1,2,3]:
+                print(option,' is not a valid option. Please enter 1, 2 or 3')
 else:
-    print(f'Total number of photos: {num_images}. Expected number of photos: {sample_size}x{num_samples}={expected_n}')
-    option = 500
+    print(f'Total number of photos on {folder_path}: {num_images}. \nExpected number of photos: {sample_size}x{num_samples}={expected_n}. Check sample size and number of samples values.')
+    error = True
 
-c=0
-for s in range(sample_size):
-    for i in range(num_samples):
-        print(c)
-        temp_img = cv2.imread(img_paths[c])
-        c=c+1
-        cv2.imshow('temp', temp_img)
-        cv2.waitKey(0)
-        cv2.destroyAllWindows
+if error:
+    print('\nPlease revise and try again.')
+else:
+    c = 0
+    for s in range(num_samples):
+        for i in range(sample_size):
+            temp_img = cv2.imread(img_paths[c])
+            if temp_img is None:
+                print(f"Error reading image: {img_paths[c]}")
+                option = 500
+            c += 1
 
 # video = cv2.VideoCapture(path_video)
 # n_frames = int(video.get(cv2.CAP_PROP_FRAME_COUNT))
