@@ -51,10 +51,23 @@ else:
     for s in range(num_samples):
         for i in range(sample_size):
             temp_img = cv2.imread(img_paths[c])
-            if temp_img is None:
-                print(f"Error reading image: {img_paths[c]}")
-                option = 500
+            
             c += 1
+
+for k in range(n_frames):
+    contador = k+1
+    frame_name = imgs_names[k]
+    video.set(cv2.CAP_PROP_POS_FRAMES, k)  # Set the frame position
+    boolean, frame = video.read()  # Read the frame
+    if boolean:
+        # Process the image and get the properties
+        dark_zone_area_i, circle_area_i, first_ring_area_i, centroid = img_proccesing(frame, frame_name)
+        
+        # Append the results outside the function
+        dark_zone_area.append(dark_zone_area_i)
+        circle_area.append(circle_area_i)
+        first_ring_area.append(first_ring_area_i)
+        centroids.append(centroid)
 
 # video = cv2.VideoCapture(path_video)
 # n_frames = int(video.get(cv2.CAP_PROP_FRAME_COUNT))

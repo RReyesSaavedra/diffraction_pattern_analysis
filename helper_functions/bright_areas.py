@@ -1,29 +1,21 @@
+%matplotlib inline
 import cv2
 import numpy as np
 import matplotlib.pyplot as plt
 
-
-
-"blockSize" # en el método adaptative threshold es el tamaño en pixeles del cuadro de exploración
-"C" # Factor multiplicativo flotante que puede admitir más o menos sensibilidad de deteccion
-"morph_iterations determines the iterations of morphological operations"
 def draw_contours(image, blockSize, C, morph_iterations):
-    # Convert to grayscale
-    gray = cv2.cvtColor(image, cv2.COLOR_RGB2GRAY)
-    # Histogram equalization to improve contrast
-    equalized = cv2.equalizeHist(gray)
-
-    # Apply an even higher Gaussian blur
-    blurred = cv2.GaussianBlur(equalized, (21, 21), 0)
+    gray = cv2.cvtColor(image, cv2.COLOR_RGB2GRAY)  # Convert to grayscale
+    equalized = cv2.equalizeHist(gray)  # Histogram equalization to improve contrast
+    blurred = cv2.GaussianBlur(equalized, (21, 21), 0)  # Apply Gaussian blur
     # 21 seems like a good number, any less and there is too much noise, lines are to wavy
 
     # Apply adaptive thresholding (MEAN gives better results than GAUSSIAN)
     adaptive_thresh = cv2.adaptiveThreshold(blurred, 255, cv2.ADAPTIVE_THRESH_MEAN_C, cv2.THRESH_BINARY_INV, blockSize, C)
 
     #uncomment if you want to see the effects of the filter
-    # plt.imshow(adaptive_thresh, cmap='gray')
-    # plt.title('testing gaussian')
-    # plt.show()
+    #plt.imshow(adaptive_thresh, cmap='gray')
+    #plt.title('testing gaussian')
+    #plt.show()
 
     # Use morphological operations with different kernels
     kernel_dilate = np.ones((5, 5), np.uint8)
@@ -34,14 +26,11 @@ def draw_contours(image, blockSize, C, morph_iterations):
 
     # Find contours with the improved edge map
     contours, _ = cv2.findContours(morph, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
-    #cv2.RETR_TREE: Retrieves all contours and reconstructs a full hierarchy of nested contours. This is useful for understanding the parent-child relationship between contours.
+    #cv2.RETR_TREE: Retrieves all contours and reconstructs a full hierarchy of nested contours.
     #other options are: cv2.RETR_EXTERNAL, cv2.RETR_LIST, cv2.RETR_CCOMP
     
     # Filter contours by circularity
     circularity_threshold=0.7
-    
-    #circular_contours = contours
-    
     circular_contours = []
     for contour in contours:
         area = cv2.contourArea(contour)
@@ -58,28 +47,31 @@ def draw_contours(image, blockSize, C, morph_iterations):
     
     return all_contours_sorted
 
-def sort_contours(dz1_contours, dz2_contours, img_x, label):
-    
+
+def sort_contours(dz1_contours, dz2_contours, img_x, label, wanted_contours):
+    #the first 2 inner contours are obtained with different draw_contours parameters for better results,
+    #the rest are all obtained with same fixed parameters.
     dz1_inner_contours = dz1_contours[:2]
-    # Compare these contours with dz2 contours
-    final_contours = dz1_inner_contours.copy()
+    all_contours = dz1_inner_contours.copy()
     area1 = cv2.contourArea(final_contours[0])
     area2 = cv2.contourArea(final_contours[1])
-    
-    for i, contour in enumerate(dz2_contours):
-        if len(final_contours) >= 4:
-            break
+
+    for contour in dz2_contours:
         area_dummy = cv2.contourArea(contour)
         diff_porcentual1 = 100*abs(area1 - area_dummy)/area_dummy
         diff_porcentual2 = 100*abs(area2 - area_dummy)/area_dummy
         
+        #this if is to make sure we don't append two similar contours
         if diff_porcentual1 > 15 and diff_porcentual2 > 15:
-            final_contours.append(contour)
+            all_contours.append(contour)
     
-    #We need to consider the case where we are not able to draw the 4 contours required.
-    boolean_break = False
-    if len(final_contours) < 4:
-        boolean_break = True
+    #We need to consider the case where we don't have the number of contours required.
+    total_contours = np.size(all_contours)
+    if wanted_contours > total_contours:
+        print(f'After processing image {label}, we were only able to draw {total_contours}/{wanted_contours} contours')
+        final_contours = all_contours
+    else:
+        final_contours = all_contours[:wanted_contours]
         
     cv2.drawContours(img_x, final_contours, -1, (0, 255, 0), 1)
     plt.figure()
@@ -91,7 +83,23 @@ def sort_contours(dz1_contours, dz2_contours, img_x, label):
     return final_contours, boolean_break
 
 
-def patern_properties(sorted_contours):
+def patern_properties(img, sorted_contours):
+    (cx0, cy0), radius0 = cv2.minEnclosingCircle(sorted_contours[0])
+    (cx1, cy1), radius1 = cv2.minEnclosingCircle(sorted_contours[1])
+
+    x_1 = int(cx0-radius1) 
+    x_origin = cx0
+    y_temp = img[cy0, x_1:x_origin]/255
+    y_mean = np.mean(y_temp)
+    y_min = np.min(y_temp)
+    #threshold value is going to a combiation of min value and average value
+    thresh = 0.66*y_min + 0.34*y_mean
+
+    x_0 = int((cx0-radius0)*0.85) #we multipliy by 0.85 to avoid including dark areas at the edges
+    first_ring_array = img[cy0, x_0:x_origin]/255
+    if any(first_ring_array) < thresh:
+        print("this contour is not the contour of the circle, it's the contour of an outer ring")
+
     area_c1 = cv2.contourArea(sorted_contours[0])
     area_c2 = cv2.contourArea(sorted_contours[1])
     area_c3 = cv2.contourArea(sorted_contours[2])
@@ -174,3 +182,15 @@ for k in range(n_frames):
         circle_area.append(circle_area_i)
         first_ring_area.append(first_ring_area_i)
         centroids.append(centroid)
+
+
+
+
+
+
+
+def drive(self):
+    print("This "+self.model+" is driving")
+
+def stop(self):
+    print("This "+self.model+" is stopped")
