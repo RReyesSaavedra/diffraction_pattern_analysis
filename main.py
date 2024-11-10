@@ -2,11 +2,15 @@ import cv2
 import numpy as np
 import matplotlib.pyplot as plt
 import os
+from helper_functions import vectorization
+#from fourier import fourier_analysis
+#from bessel_adjustment import bessel_analysis
 
-#getting the folder that was used to make the video to extract the names of the patterns
+#bellow are the only values that need to be modified
 folder_path = '/Users/Rudy/Documents/img_KCl_base'
 sample_size = 2
 num_samples = 6
+molaridades = [0.000001, 0.1875, 0.375, 0.75, 1.5, 3] #0 values will cause errors
 
 imgs_names = sorted(os.listdir(folder_path))
 img_paths = []
@@ -47,38 +51,22 @@ else:
 if error:
     print('\nPlease revise and try again.')
 else:
-    c = 0
-    for s in range(num_samples):
-        for i in range(sample_size):
-            temp_img = cv2.imread(img_paths[c])
-            
-            c += 1
+    if option == 1:
+        fourier_analysis(img_paths,sample_size,num_samples)
+    elif option ==2:
+        error = vectorization(img_paths,sample_size,num_samples)
+        #y_arrays, centroid = area_analysis(img_paths,sample_size,num_samples)
+        #bessel_analysis(img_paths,sample_size,num_samples,y_arrays, centroid)
+    elif option ==3:
+        fourier_analysis(img_paths,sample_size,num_samples)
+        y_arrays, centroid = area_analysis(img_paths,sample_size,num_samples)
+        bessel_analysis(img_paths,sample_size,num_samples,y_arrays, centroid)
 
-for k in range(n_frames):
-    contador = k+1
-    frame_name = imgs_names[k]
-    video.set(cv2.CAP_PROP_POS_FRAMES, k)  # Set the frame position
-    boolean, frame = video.read()  # Read the frame
-    if boolean:
-        # Process the image and get the properties
-        dark_zone_area_i, circle_area_i, first_ring_area_i, centroid = img_proccesing(frame, frame_name)
         
-        # Append the results outside the function
-        dark_zone_area.append(dark_zone_area_i)
-        circle_area.append(circle_area_i)
-        first_ring_area.append(first_ring_area_i)
-        centroids.append(centroid)
-
-# video = cv2.VideoCapture(path_video)
-# n_frames = int(video.get(cv2.CAP_PROP_FRAME_COUNT))
 # dark_zone_area = []
 # circle_area = []
 # first_ring_area = []
 # centroids = []
-
-# print(f"Video with path: {path_video} read successfully\n\nFrames to be analyzed: {n_frames}")
-
-# global contador
 
 # for k in range(n_frames):
 #     contador = k+1
