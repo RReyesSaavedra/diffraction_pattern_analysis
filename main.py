@@ -41,7 +41,8 @@ if expected_n == num_images:
     if not error: 
         option = 0
         while option not in [1,2,3]:
-            option = int(input('\nThese are the available options for anlyzing your pattern images: \n1.Fourier\n2.Bright areas and Bessel\n3.All\n\nPlease enter a number: '))
+            #option = int(input('\nThese are the available options for anlyzing your pattern images: \n1.Fourier\n2.Bright areas and Bessel\n3.All\n\nPlease enter a number: '))
+            option = 2  #option testing
             if option not in [1,2,3]:
                 print(option,' is not a valid option. Please enter 1, 2 or 3')
 else:
@@ -63,138 +64,6 @@ else:
         bessel_analysis(img_paths,sample_size,num_samples,y_arrays, centroid)
 
         
-# dark_zone_area = []
-# circle_area = []
-# first_ring_area = []
-# centroids = []
-
-# for k in range(n_frames):
-#     contador = k+1
-#     frame_name = imgs_names[k]
-#     video.set(cv2.CAP_PROP_POS_FRAMES, k)  # Set the frame position
-#     boolean, frame = video.read()  # Read the frame
-#     if boolean:
-#         # Process the image and get the properties
-#         dark_zone_area_i, circle_area_i, first_ring_area_i, centroid = img_proccesing_main(frame, frame_name)
-        
-#         # Append the results outside the function
-#         dark_zone_area.append(dark_zone_area_i)
-#         circle_area.append(circle_area_i)
-#         first_ring_area.append(first_ring_area_i)
-#         centroids.append(centroid)
-
-# total_bright_area = [circle + first_ring for circle, first_ring in zip(circle_area, first_ring_area)]
-
-
-
-
-# total_bright_area = [circle + first_ring for circle, first_ring in zip(circle_area, first_ring_area)]
-
-# def err_value_4bam(areas):
-#     error_array = np.zeros(int(n_frames/2))
-#     for i in range(int(n_frames/2)):
-#         j = 2*i
-#         k = 2*i+1
-#         error_array[i] = 100 * abs(areas[j] - areas[k]) / areas[j]
-#     return error_array
-
-# error_values_bright_area = err_value_4bam(total_bright_area)
-# print(f'\n\nESTIMATED PERCENTAGE OF ERROR OF EACH PULSE: {error_values_bright_area}')
-# BA_MEASUREMENT_ERROR = np.mean(error_values_bright_area)
-# print(f'\n\nESTIMATED MEASUREMENT ERROR: {BA_MEASUREMENT_ERROR}')
-
-# def promediar_areas4y5(areas):
-#     areas_prom = np.zeros(int(n_frames/2))
-#     for i in range(int(n_frames/2)):
-#         j = 2*i
-#         k = 2*i+1
-#         areas_prom[i] = (areas[j] + areas[k]) / 2
-#     return areas_prom
-
-# dz_area_prom = promediar_areas4y5(dark_zone_area)
-
-# Molaridad = [0.000001, 0.1875, 0.375, 0.75, 1.5, 3]
-
-# plt.scatter(Molaridad, dz_area_prom)
-# plt.title('Dark Zone Average Area (Frame 4 and 5)')
-# plt.xlabel('Molarity')
-# plt.ylabel('Area in Pixels')
-# plt.grid(True)
-# plt.show()
-
-# bz_area_prom = promediar_areas4y5(total_bright_area)
-
-# plt.scatter(Molaridad, bz_area_prom/bz_area_prom[0]*100)
-# plt.title('Bright Zone Average Area (Frame 4 and 5)')
-# plt.xlabel('Molarity')
-# plt.ylabel('Area in Pixels')
-# plt.grid(True)
-# plt.show()
-
-
-# #area_luminosa_entre_M = bz_area_prom/Molaridad
-# #print(f'\n\nRelación área luminosa y Molaridad: {area_luminosa_entre_M}')
-
-# #n_of_values is the number of photos per Molarity
-# def diff_value(values,sample_size,method_label):
-#     n = np.size(values)
-#     num_of_samples = int(n/sample_size)
-#     diff_array = np.zeros(num_of_samples)
-#     std_dev = np.zeros(num_of_samples)
-#     mean_value = np.zeros(num_of_samples)
-    
-#     print(f'all values:  \t {values}')
-
-#     for i in range(num_of_samples):
-#         ia =int(i*sample_size)
-#         ib =ia+sample_size
-#         temp_array = np.array(values[ia:ib])
-#         print(f'temp array: {temp_array}')
-#         std_dev[i] = np.std(temp_array)
-#         mean_value[i] = np.mean(temp_array)
-#         if not i == 0:
-#             diff_array[i] = mean_value[i]- mean_value[i-1]
-#             print(diff_array[i])
-            
-        
-#     print('\n'+method_label+'\n')
-#     print(mean_value)
-#     print(diff_array)
-#     print(std_dev)
-#     print('goodbye')
-
-        
-    
-#     return diff_array, std_dev, mean_value
-
-# diff_bza, error_bza, mean_bza = diff_value(total_bright_area,2,"Método de las areas brillosas")
-
-# # Extract x and y coordinates
-# x_coords = [cX for cX, cY in centroids]
-# print(x_coords)
-# y_coords = [cY for cX, cY in centroids]
-# print(y_coords)
-
-
-# # Plot the centroids and arrows using matplotlib
-# plt.figure(figsize=(10, 10))
-
-# for i in range(len(centroids) - 1):
-#     cX1, cY1 = centroids[i]
-#     cX2, cY2 = centroids[i + 1]
-#     plt.scatter(cX1, cY1, color='blue')
-#     plt.text(cX1, cY1, str(i+1), color='blue', fontsize=12)
-#     plt.arrow(cX1, cY1, cX2 - cX1, cY2 - cY1, head_width=0.5, head_length=0.5, fc='green', ec='green')
-
-# # Plot the last point
-# cX_last, cY_last = centroids[-1]
-# plt.scatter(cX_last, cY_last, color='blue')
-# plt.text(cX_last, cY_last, str(len(centroids)), color='blue', fontsize=12)
-# plt.title("Centroids of Contours with Arrows")
-# plt.xlabel("X Coordinate")
-# plt.ylabel("Y Coordinate")
-# plt.gca().invert_yaxis()  # Invert y axis to match the image coordinate system
-# plt.show()
 
 # global x_dimension
 
