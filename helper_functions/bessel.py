@@ -2,39 +2,6 @@ import cv2
 import numpy as np
 import matplotlib.pyplot as plt
 
-def bessel_adjust(y_array, centroids):
-
-    # Extract x and y coordinates
-    x_coords = [cX for cX, cY in centroids]
-    print(x_coords)
-    y_coords = [cY for cX, cY in centroids]
-    print(y_coords)
-
-
-    # Plot the centroids and arrows using matplotlib
-    plt.figure(figsize=(10, 10))
-
-    for i in range(len(centroids) - 1):
-        cX1, cY1 = centroids[i]
-        cX2, cY2 = centroids[i + 1]
-        plt.scatter(cX1, cY1, color='blue')
-        plt.text(cX1, cY1, str(i+1), color='blue', fontsize=12)
-        plt.arrow(cX1, cY1, cX2 - cX1, cY2 - cY1, head_width=0.5, head_length=0.5, fc='green', ec='green')
-
-    # Plot the last point
-    cX_last, cY_last = centroids[-1]
-    plt.scatter(cX_last, cY_last, color='blue')
-    plt.text(cX_last, cY_last, str(len(centroids)), color='blue', fontsize=12)
-    plt.title("Centroids of Contours with Arrows")
-    plt.xlabel("X Coordinate")
-    plt.ylabel("Y Coordinate")
-    plt.gca().invert_yaxis()  # Invert y axis to match the image coordinate system
-    plt.show()
-
-    error_analysis = 0
-    return error_analysis
-
-global x_dimension
 
 def bessel_patern(img, x, y):
     # Convertir las imágenes a escala de grises    

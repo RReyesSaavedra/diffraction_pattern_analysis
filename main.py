@@ -2,12 +2,13 @@ import cv2
 import numpy as np
 import matplotlib.pyplot as plt
 import os
-from helper_functions import vectorization
+from helper_functions import vectorization, area_analysis
 #from fourier import fourier_analysis
 #from bessel_adjustment import bessel_analysis
 
 #bellow are the only values that need to be modified
-folder_path = '/Users/Rudy/Documents/img_KCl_base'
+folder_path = '/Users/rodolfo.reyes/Documents/img_KCl_base'
+global sample_size, num_samples
 sample_size = 2
 num_samples = 6
 molaridades = [0.000001, 0.1875, 0.375, 0.75, 1.5, 3] #0 values will cause errors
@@ -55,10 +56,12 @@ else:
     if option == 1:
         fourier_analysis(img_paths,sample_size,num_samples)
     elif option ==2:
-        error_analysis, centroids, y_arrays = vectorization(img_paths,sample_size,num_samples)
-        #y_arrays, centroid = area_analysis(img_paths,sample_size,num_samples)
-        #bessel_analysis(img_paths,sample_size,num_samples,y_arrays, centroid)
+        processed_images = vectorization(img_paths)
+        error, diff = area_analysis(processed_images)
+        error, diff = bessel_analysis(processed_images)
     elif option ==3:
-        fourier_analysis(img_paths,sample_size,num_samples)
-        y_arrays, centroid = area_analysis(img_paths,sample_size,num_samples)
-        bessel_analysis(img_paths,sample_size,num_samples,y_arrays, centroid)
+        processed_images = vectorization(img_paths)
+        error, diff = area_analysis(processed_images)
+        error, diff = bessel_analysis(processed_images)
+        error, diff = fourier_analysis(processed_images)
+        

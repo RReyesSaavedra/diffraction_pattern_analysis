@@ -4,10 +4,25 @@ import matplotlib.pyplot as plt
 import os
 
 
+#cada imagen será un objeto con 5 propiedades
+class ProcessedImage:
+    def __init__(self, dark_zone_area_i, circle_area_i, first_ring_area_i, centroid, img_array):
+        self.dark_zone_area_i = dark_zone_area_i
+        self.circle_area_i = circle_area_i
+        self.first_ring_area_i = first_ring_area_i
+        self.centroid = centroid
+        self.img_array = img_array
+
+    def __repr__(self):
+        return (f"ProcessedImage(dark_zone_area_i={self.dark_zone_area_i}, "
+                f"circle_area_i={self.circle_area_i}, "
+                f"first_ring_area_i={self.first_ring_area_i}, "
+                f"centroid={self.centroid})")
+
+
 "blockSize" # en el método adaptative threshold es el tamaño en pixeles del cuadro de exploración
 "C" # Factor multiplicativo flotante que puede admitir más o menos sensibilidad de deteccion
 "morph_iterations determines the iterations of morphological operations"
-
 def draw_contours(image, blockSize, C, morph_iterations):
     gray = cv2.cvtColor(image, cv2.COLOR_RGB2GRAY)  # Convert to grayscale
     equalized = cv2.equalizeHist(gray)  # Histogram equalization to improve contrast
@@ -131,7 +146,7 @@ def patern_properties(img_array, sorted_contours):
     # Return calculated properties
     return dark_zone_area_i, circle_area_i, first_ring_area_i, centroid
 
-def img_proccesing(image_BGR, img_name, wanted_contours):
+def img_processing(image_BGR, img_name, wanted_contours):
     image_RGB = cv2.cvtColor(image_BGR, cv2.COLOR_BGR2RGB)
     gray = cv2.cvtColor(image_RGB, cv2.COLOR_RGB2GRAY) 
     
@@ -162,40 +177,68 @@ def img_proccesing(image_BGR, img_name, wanted_contours):
 
     contours_sorted, break_boolean = sort_contours(dz1_contours, dz2_contours, image, img_name, wanted_contours)
     
-    # Return pattern properties
-    return *patern_properties(img_array, contours_sorted), img_array
+    # Obtener propiedades del patrón
+    dark_zone_area_i, circle_area_i, first_ring_area_i, centroid = patern_properties(img_array, contours_sorted)
 
-def vectorization(img_paths,sample_size,num_samples):
-    #define all arays
-    dark_zone_area = np.array([])
-    circle_area = np.array([])
-    first_ring_area = np.array([])
-    centroids = np.array([])
-    y_arrays = []
+    # Devolver objeto de clase
+    return ProcessedImage(dark_zone_area_i, circle_area_i, first_ring_area_i, centroid, img_array)
 
+def vectorization(img_paths):
+    processed_images = []  # Lista de objetos `ProcessedImage`
     wanted_contours = 4
-    n = np.size(img_paths)
-    for i in range(n):
-        temp_BGR = cv2.imread(img_paths[i])
-        img_name = os.path.splitext(os.path.basename(img_paths[i]))[0]
-        #call main image processing function
-        dark_zone_area_i, circle_area_i, first_ring_area_i, centroid, img_array = img_proccesing(temp_BGR, img_name, wanted_contours)
-        dark_zone_area = np.append(dark_zone_area, dark_zone_area_i)
-        circle_area = np.append(circle_area, circle_area_i)
-        first_ring_area = np.append(first_ring_area, first_ring_area_i)
-        centroids = np.append(centroids, centroid)
-        y_arrays.append(img_array)
 
-    total_bright_area = circle_area + first_ring_area
+    for path in img_paths:
+        temp_BGR = cv2.imread(path)
+        img_name = os.path.splitext(os.path.basename(path))[0]
 
-    #Molaridad = [0.000001, 0.1875, 0.375, 0.75, 1.5, 3]
-    plt.scatter(range(n), total_bright_area/total_bright_area[0]*100)
+        # Procesar imagen y agregar el objeto resultante a la lista
+        processed_img = img_processing(temp_BGR, img_name, wanted_contours)
+        processed_images.append(processed_img)
+
+    # Devolver resultados como lista de objetos
+    return processed_images
+
+def plot_centroids(centroids):
+   # Plot the centroids and arrows using matplotlib
+    plt.figure(figsize=(10, 10))
+
+    for i in range(len(centroids) - 1):
+        cX1, cY1 = centroids[i]
+        cX2, cY2 = centroids[i + 1]
+        plt.scatter(cX1, cY1, color='blue')
+        plt.text(cX1, cY1, str(i+1), color='blue', fontsize=12)
+        plt.arrow(cX1, cY1, cX2 - cX1, cY2 - cY1, head_width=0.5, head_length=0.5, fc='green', ec='green')
+
+    # Plot the last point
+    cX_last, cY_last = centroids[-1]
+    plt.scatter(cX_last, cY_last, color='blue')
+    plt.text(cX_last, cY_last, str(len(centroids)), color='blue', fontsize=12)
+    plt.title("Centroids of Contours with Arrows")
+    plt.xlabel("X Coordinate")
+    plt.ylabel("Y Coordinate")
+    plt.gca().invert_yaxis()  # Invert y axis to match the image coordinate system
+    plt.show()
+
+def area_analysis(processed_images):
+    # Análisis de datos
+    total_bright_area = [img.circle_area_i + img.first_ring_area_i for img in processed_images]
+
+    plt.scatter(range(len(total_bright_area)), np.array(total_bright_area) / total_bright_area[0] * 100)
     plt.title('Bright Zone Area')
     plt.xlabel('Sample number')
-    plt.ylabel('Porcentage of first sample area')
+    plt.ylabel('Percentage of first sample area')
     plt.grid(True)
     plt.show()
-    error_analysis = 0
+
+    # Extract centroids from each ProcessedImage object
+    centroids = [obj.centroid for obj in processed_images]
+    # Now call the function
+    plot_centroids(centroids)
+
+    error = 0
+    diff = [0,0,0]
+    return error, diff
+
     #Molaridad = [0.000001, 0.1875, 0.375, 0.75, 1.5, 3]
 
 
