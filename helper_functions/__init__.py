@@ -1,8 +1,10 @@
 # __init__.py
 from .bright_areas import vectorization
 from .bright_areas import area_analysis
+from .bessel import bessel_analysis
 
 __all__ = [
     "vectorization",
-    "area_analysis"
+    "area_analysis",
+    "bessel_analysis"
 ]           

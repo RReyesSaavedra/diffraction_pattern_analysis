@@ -2,14 +2,14 @@ import cv2
 import numpy as np
 import matplotlib.pyplot as plt
 import os
-
+import config
 
 #cada imagen será un objeto con 5 propiedades
 class ProcessedImage:
     def __init__(self, dark_zone_area_i, circle_area_i, first_ring_area_i, centroid, img_array):
         self.dark_zone_area_i = dark_zone_area_i
         self.circle_area_i = circle_area_i
-        self.first_ring_area_i = first_ring_area_i
+        self.first_ring_area_i = first_ring_area_i 
         self.centroid = centroid
         self.img_array = img_array
 
@@ -96,12 +96,12 @@ def sort_contours(dz1_contours, dz2_contours, img_x, label, wanted_contours):
         final_contours = all_contours[:wanted_contours]
         boolean_break = False
 
-    cv2.drawContours(img_x, final_contours, -1, (0, 255, 0), 1)
-    plt.figure()
-    plt.imshow(img_x)
-    plt.title(label)
-    plt.axis('off')
-    plt.show()
+    # cv2.drawContours(img_x, final_contours, -1, (0, 255, 0), 1)
+    # plt.figure()
+    # plt.imshow(img_x)
+    # plt.title(label)
+    # plt.axis('off')
+    # plt.show()
     
     return final_contours, boolean_break
 
@@ -121,6 +121,8 @@ def patern_properties(img_array, sorted_contours):
 
     x_0 = int((cx0-radius0)*0.85) #we multipliy by 0.85 to avoid including dark areas at the edges
     first_ring_array = img_array[y_origin, x_0:x_origin]/255
+
+    #FINISH CODE
     if any(first_ring_array) < thresh:
         print("this contour is not the contour of the circle, it's the contour of an outer ring")
 
@@ -148,13 +150,12 @@ def patern_properties(img_array, sorted_contours):
 
 def img_processing(image_BGR, img_name, wanted_contours):
     image_RGB = cv2.cvtColor(image_BGR, cv2.COLOR_BGR2RGB)
-    gray = cv2.cvtColor(image_RGB, cv2.COLOR_RGB2GRAY) 
+    #gray = cv2.cvtColor(image_RGB, cv2.COLOR_RGB2GRAY) 
     
-    # Create copies for R, G, and B channels
+    # Create copies for R, G, and B channels, we keep arrays three dimentional to convert to gray scale alter
     image_red = np.zeros_like(image_RGB)
     image_green = np.zeros_like(image_RGB)
     image_blue = np.zeros_like(image_RGB)
-
     image_red[:, :, 0] = image_RGB[:, :, 0]    # Assign the red channel
     image_green[:, :, 1] = image_RGB[:, :, 1]    # Assign the green channel
     image_blue[:, :, 2] = image_RGB[:, :, 2]    # Assign the blue channel
@@ -162,7 +163,7 @@ def img_processing(image_BGR, img_name, wanted_contours):
     #select what chanel you want to use:
     image = image_red
     img_array = image[:, :, 0] #don't forget to change index if you change channel
-
+    
     # For first dark ring:
     blockSize = 45
     C = 2
@@ -176,23 +177,25 @@ def img_processing(image_BGR, img_name, wanted_contours):
     dz2_contours = draw_contours(image, blockSize, C, morph_iterations)
 
     contours_sorted, break_boolean = sort_contours(dz1_contours, dz2_contours, image, img_name, wanted_contours)
-    
     # Obtener propiedades del patrón
     dark_zone_area_i, circle_area_i, first_ring_area_i, centroid = patern_properties(img_array, contours_sorted)
+
+    #Declaring array again since it was modified while getting centroid and properties
+    image_red = image_RGB[:, :, 0] #keeping only red channel
+    img_array = image_red   
 
     # Devolver objeto de clase
     return ProcessedImage(dark_zone_area_i, circle_area_i, first_ring_area_i, centroid, img_array)
 
 def vectorization(img_paths):
     processed_images = []  # Lista de objetos `ProcessedImage`
-    wanted_contours = 4
 
     for path in img_paths:
         temp_BGR = cv2.imread(path)
         img_name = os.path.splitext(os.path.basename(path))[0]
 
         # Procesar imagen y agregar el objeto resultante a la lista
-        processed_img = img_processing(temp_BGR, img_name, wanted_contours)
+        processed_img = img_processing(temp_BGR, img_name, config.wanted_contours)
         processed_images.append(processed_img)
 
     # Devolver resultados como lista de objetos
@@ -220,14 +223,34 @@ def plot_centroids(centroids):
     plt.show()
 
 def area_analysis(processed_images):
-    # Análisis de datos
+    # Calculate total bright area
     total_bright_area = [img.circle_area_i + img.first_ring_area_i for img in processed_images]
+    y = np.array(total_bright_area) / total_bright_area[0] * 100
+    labels = [str(round(m,3))+'M' for m in config.molaridades]
 
-    plt.scatter(range(len(total_bright_area)), np.array(total_bright_area) / total_bright_area[0] * 100)
+    # Create scatter plot
+    x_array = range(1,len(total_bright_area)+1)
+    plt.scatter(x_array, y, label="Bright Area Porcentage")
+
+    # Set y-axis limit to the max value
+    plt.ylim(min(y)*0.8, max(y) * 1.1)  # Extends 10% above max value
+
+    # Draw vertical lines and place labels
+    for i in range(1, config.num_samples+1):
+        x = i * config.sample_size + 0.5
+        plt.plot([x, x], [0, max(y) * 1.3], 'o-')   # Keep your original label
+
+        # Place label slightly to the left and at the bottom
+        plt.text(x - 0.2, min(y*0.9), labels[i - 1], color='red', fontsize=10, 
+                horizontalalignment='right', verticalalignment='bottom')
+
+    # Aesthetics
     plt.title('Bright Zone Area')
     plt.xlabel('Sample number')
     plt.ylabel('Percentage of first sample area')
+    plt.xticks(x_array)
     plt.grid(True)
+    plt.legend()
     plt.show()
 
     # Extract centroids from each ProcessedImage object
@@ -238,9 +261,6 @@ def area_analysis(processed_images):
     error = 0
     diff = [0,0,0]
     return error, diff
-
-    #Molaridad = [0.000001, 0.1875, 0.375, 0.75, 1.5, 3]
-
 
 # def err_value_4bam(areas):
 #     error_array = np.zeros(int(n_frames/2))
@@ -347,12 +367,3 @@ def area_analysis(processed_images):
 # plt.ylabel("Y Coordinate")
 # plt.gca().invert_yaxis()  # Invert y axis to match the image coordinate system
 # plt.show()
-    return error_analysis
-
-
-
-def drive(self):
-    print("This "+self.model+" is driving")
-
-def stop(self):
-    print("This "+self.model+" is stopped")
