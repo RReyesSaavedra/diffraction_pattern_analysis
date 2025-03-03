@@ -148,22 +148,51 @@ def patern_properties(img_array, sorted_contours):
     # Return calculated properties
     return dark_zone_area_i, circle_area_i, first_ring_area_i, centroid
 
+def filter_channel(image_RGB, channel):
+    # Create copies for R, G, and B channels, we keep arrays three dimentional to convert to gray scale alter
+
+    # plt.figure()
+    # plt.imshow(image_RGB[:,:,0])
+    # plt.title('red')
+    # plt.axis('off')
+    # plt.show()
+
+    # plt.figure()
+    # plt.imshow(image_RGB[:,:,1])
+    # plt.title('green')
+    # plt.axis('off')
+    # plt.show()
+
+    # plt.figure()
+    # plt.imshow(image_RGB[:,:,2])
+    # plt.title('blue')
+    # plt.axis('off')
+    # plt.show()
+
+    new_img = np.zeros_like(image_RGB)
+    if channel == 'red':
+        new_img[:, :, 0] = image_RGB[:, :, 0]    # Keep red channel only
+        img_array = new_img[:, :, 0]
+    elif channel == 'green':
+        new_img[:, :, 1] = image_RGB[:, :, 1]    # Keep green channel only
+        img_array = new_img[:, :, 1]
+    elif channel == 'blue':
+        new_img[:, :, 2] = image_RGB[:, :, 2]    # Keep blue channel only
+        img_array = new_img[:, :, 2]
+    elif channel == 'r+g':
+        new_img[:, :, 0] = image_RGB[:, :, 0]    # Keep red channel
+        new_img[:, :, 1] = image_RGB[:, :, 1]    # Keep green channel
+        img_array = cv2.cvtColor(image_RGB, cv2.COLOR_RGB2GRAY) 
+    else:
+        new_img = image_RGB
+        img_array = cv2.cvtColor(image_RGB, cv2.COLOR_RGB2GRAY)  
+
+    return new_img, img_array
+
 def img_processing(image_BGR, img_name, wanted_contours):
     image_RGB = cv2.cvtColor(image_BGR, cv2.COLOR_BGR2RGB)
-    #gray = cv2.cvtColor(image_RGB, cv2.COLOR_RGB2GRAY) 
-    
-    # Create copies for R, G, and B channels, we keep arrays three dimentional to convert to gray scale alter
-    image_red = np.zeros_like(image_RGB)
-    image_green = np.zeros_like(image_RGB)
-    image_blue = np.zeros_like(image_RGB)
-    image_red[:, :, 0] = image_RGB[:, :, 0]    # Assign the red channel
-    image_green[:, :, 1] = image_RGB[:, :, 1]    # Assign the green channel
-    image_blue[:, :, 2] = image_RGB[:, :, 2]    # Assign the blue channel
+    image, img_array = filter_channel(image_RGB,config.channel)
 
-    #select what chanel you want to use:
-    image = image_red
-    img_array = image[:, :, 0] #don't forget to change index if you change channel
-    
     # For first dark ring:
     blockSize = 45
     C = 2
@@ -181,21 +210,20 @@ def img_processing(image_BGR, img_name, wanted_contours):
     dark_zone_area_i, circle_area_i, first_ring_area_i, centroid = patern_properties(img_array, contours_sorted)
 
     #Declaring array again since it was modified while getting centroid and properties
-    image_red = image_RGB[:, :, 0] #keeping only red channel
-    img_array = image_red   
+    image, img_array = filter_channel(image_RGB,config.channel)
 
     # Devolver objeto de clase
     return ProcessedImage(dark_zone_area_i, circle_area_i, first_ring_area_i, centroid, img_array)
 
 def vectorization(img_paths):
     processed_images = []  # Lista de objetos `ProcessedImage`
-
+    wanted_contours = config.rings_to_analyze*2
     for path in img_paths:
         temp_BGR = cv2.imread(path)
         img_name = os.path.splitext(os.path.basename(path))[0]
 
         # Procesar imagen y agregar el objeto resultante a la lista
-        processed_img = img_processing(temp_BGR, img_name, config.wanted_contours)
+        processed_img = img_processing(temp_BGR, img_name, wanted_contours)
         processed_images.append(processed_img)
 
     # Devolver resultados como lista de objetos

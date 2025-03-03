@@ -2,7 +2,7 @@ import cv2
 import numpy as np
 import matplotlib.pyplot as plt
 import os
-from helper_functions import vectorization, area_analysis, bessel_analysis
+from helper_functions import vectorization, area_analysis, bessel_adjustment, adjustments_compair
 import config
 #from fourier import fourier_analysis
 #from bessel_adjustment import bessel_analysis
@@ -55,7 +55,8 @@ else:
     elif option ==2:
         processed_images = vectorization(img_paths) #processed images is a list ob objects
         error, diff = area_analysis(processed_images)
-        error, diff = bessel_analysis(processed_images,imgs_names)
+        #error, diff = bessel_adjustment(processed_images,imgs_names)
+        error, diff = adjustments_compair(processed_images,imgs_names)
     elif option ==3:
         processed_images = vectorization(img_paths)
         error, diff = area_analysis(processed_images)
